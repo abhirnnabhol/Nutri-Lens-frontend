@@ -9,8 +9,13 @@ export default function SignUp() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { register } = useAuth();
+  const { register, loginGuest } = useAuth();
   const navigate = useNavigate();
+
+  const handleGuestLogin = () => {
+    loginGuest();
+    navigate("/home", { replace: true });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,7 +26,20 @@ export default function SignUp() {
       await register(email, password, fullName);
       navigate("/onboarding", { replace: true });
     } catch (err) {
-      setError(err.message || "Sign up failed.");
+      if (
+        err.message &&
+        (err.message.includes("Unexpected token") ||
+          err.message.includes("failed to fetch") ||
+          err.message.includes("Network error") ||
+          err.status === 404 ||
+          err.status === 0)
+      ) {
+        setError(
+          "Backend API is connecting or not yet configured. Click 'Explore App as Guest' below to test the full app immediately!",
+        );
+      } else {
+        setError(err.message || "Sign up failed.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -91,6 +109,14 @@ export default function SignUp() {
 
         <button type="submit" className="nl-btn-submit" disabled={isSubmitting}>
           {isSubmitting ? "Creating Account..." : "Continue"}
+        </button>
+
+        <button
+          type="button"
+          className="nl-btn-guest"
+          onClick={handleGuestLogin}
+        >
+          ✨ Explore App as Guest
         </button>
 
         <div className="nl-auth__footer">

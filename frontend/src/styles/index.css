@@ -288,6 +288,30 @@ input {
   cursor: not-allowed;
 }
 
+.nl-btn-guest {
+  width: 100%;
+  height: 48px;
+  background: transparent;
+  color: var(--nl-teal);
+  border: 1.5px solid var(--nl-teal);
+  border-radius: var(--nl-radius-full);
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.nl-btn-guest:hover {
+  background: rgba(13, 148, 136, 0.08);
+  border-color: var(--nl-teal-dark);
+  color: var(--nl-teal-dark);
+}
+
 .nl-auth__forgot {
   text-align: center;
   margin-top: 4px;

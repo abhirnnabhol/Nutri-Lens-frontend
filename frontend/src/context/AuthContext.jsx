@@ -94,6 +94,18 @@ export function AuthProvider({ children }) {
     localStorage.setItem("nutrilens_user", JSON.stringify(updatedUser));
   };
 
+  const loginGuest = () => {
+    const guestUser = {
+      id: "guest",
+      email: "guest@nutrilens.app",
+      fullName: "Guest Explorer",
+      profileComplete: true,
+    };
+    localStorage.setItem("nutrilens_user", JSON.stringify(guestUser));
+    setUser(guestUser);
+    return guestUser;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -101,6 +113,7 @@ export function AuthProvider({ children }) {
         token,
         loading,
         login,
+        loginGuest,
         register,
         logout,
         updateUser,

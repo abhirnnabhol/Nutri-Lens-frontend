@@ -12,8 +12,13 @@ export default function Login() {
   const [oauthModal, setOauthModal] = useState({ isOpen: false, provider: "" });
   const [forgotModal, setForgotModal] = useState(false);
 
-  const { login } = useAuth();
+  const { login, loginGuest } = useAuth();
   const navigate = useNavigate();
+
+  const handleGuestLogin = () => {
+    loginGuest();
+    navigate("/home", { replace: true });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +33,20 @@ export default function Login() {
         navigate("/onboarding", { replace: true });
       }
     } catch (err) {
-      setError(err.message || "Login failed. Please check your credentials.");
+      if (
+        err.message &&
+        (err.message.includes("Unexpected token") ||
+          err.message.includes("failed to fetch") ||
+          err.message.includes("Network error") ||
+          err.status === 404 ||
+          err.status === 0)
+      ) {
+        setError(
+          "Backend API is connecting or not yet configured. Click 'Explore App as Guest' below to test the full app immediately!",
+        );
+      } else {
+        setError(err.message || "Login failed. Please check your credentials.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -142,6 +160,15 @@ export default function Login() {
         {/* Submit */}
         <button type="submit" className="nl-btn-submit" disabled={isSubmitting}>
           {isSubmitting ? "Logging In..." : "Log In"}
+        </button>
+
+        {/* Instant Guest / Demo Access */}
+        <button
+          type="button"
+          className="nl-btn-guest"
+          onClick={handleGuestLogin}
+        >
+          ✨ Explore App as Guest
         </button>
 
         {/* Forgot Password */}
