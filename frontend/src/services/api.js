@@ -4,7 +4,18 @@
  * Automatically injects JWT Bearer token from localStorage.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+function getApiBaseUrl() {
+  let base = (import.meta.env.VITE_API_URL || "/api").trim();
+  // Strip trailing slashes
+  base = base.replace(/\/+$/, "");
+  // If user provided full URL like https://xyz.vercel.app without /api, append /api
+  if (base.startsWith("http") && !base.endsWith("/api")) {
+    base = `${base}/api`;
+  }
+  return base;
+}
+
+const API_BASE_URL = getApiBaseUrl();
 
 class ApiError extends Error {
   constructor(message, status, data = null) {

@@ -7,23 +7,36 @@ let pool = null;
 let isFallback = false;
 
 // Standard PostgreSQL pool using DATABASE_URL
+const isRemoteDb =
+  env.databaseUrl &&
+  !env.databaseUrl.includes("localhost") &&
+  !env.databaseUrl.includes("127.0.0.1");
+
 const pgPool = new Pool({
   connectionString: env.databaseUrl,
-  max: 20,
+  max: 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000,
+  ...(isRemoteDb || env.nodeEnv === "production"
+    ? { ssl: { rejectUnauthorized: false } }
+    : {}),
 });
 
 pgPool.on("error", (_err) => {
   // Suppress uncaught idle client error if falling back
 });
 
+function findSqlFile(filename, subfolder = "migrations") {
+  const candidates = [
+    path.resolve(__dirname, `../../database/${subfolder}/${filename}`),
+    path.resolve(__dirname, `../../../database/${subfolder}/${filename}`),
+  ];
+  return candidates.find((p) => fs.existsSync(p)) || null;
+}
+
 async function runMigrationsAndSeeds(clientOrPool) {
-  const schemaPath = path.resolve(
-    __dirname,
-    "../../../database/migrations/001_phase2_schema.sql",
-  );
-  if (fs.existsSync(schemaPath)) {
+  const schemaPath = findSqlFile("001_phase2_schema.sql", "migrations");
+  if (schemaPath) {
     const schemaSql = fs.readFileSync(schemaPath, "utf8");
     await clientOrPool.query(schemaSql);
     try {
@@ -47,11 +60,8 @@ async function runMigrationsAndSeeds(clientOrPool) {
     }
   }
 
-  const seedPath = path.resolve(
-    __dirname,
-    "../../../database/seed/002_demo_seed.sql",
-  );
-  if (fs.existsSync(seedPath)) {
+  const seedPath = findSqlFile("002_demo_seed.sql", "seed");
+  if (seedPath) {
     const seedSql = fs.readFileSync(seedPath, "utf8");
     await clientOrPool.query(seedSql);
   }
@@ -62,7 +72,9 @@ async function initPool() {
 
   try {
     const client = await pgPool.connect();
-    console.log(`📦 [PostgreSQL] Connected successfully to ${env.databaseUrl}`);
+    console.log(
+      `📦 [PostgreSQL] Connected successfully to ${env.databaseUrl.replace(/:[^:@]+@/, ":****@")}`,
+    );
     await runMigrationsAndSeeds(client);
     client.release();
     pool = pgPool;
@@ -86,20 +98,14 @@ async function initPool() {
       });
 
       // Load Phase 2 schema migrations
-      const schemaPath = path.resolve(
-        __dirname,
-        "../../../database/migrations/001_phase2_schema.sql",
-      );
-      if (fs.existsSync(schemaPath)) {
+      const schemaPath = findSqlFile("001_phase2_schema.sql", "migrations");
+      if (schemaPath) {
         memDb.public.none(fs.readFileSync(schemaPath, "utf8"));
       }
 
       // Load demo seed data
-      const seedPath = path.resolve(
-        __dirname,
-        "../../../database/seed/002_demo_seed.sql",
-      );
-      if (fs.existsSync(seedPath)) {
+      const seedPath = findSqlFile("002_demo_seed.sql", "seed");
+      if (seedPath) {
         memDb.public.none(fs.readFileSync(seedPath, "utf8"));
       }
 

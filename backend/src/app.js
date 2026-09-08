@@ -19,6 +19,17 @@ if (env.nodeEnv === "development") {
   });
 }
 
+// Root endpoint for deployment verification
+app.get("/", (_req, res) => {
+  res.status(200).json({
+    status: "online",
+    name: "NutriLens API",
+    version: "1.0.0",
+    docs: "NutriLens packaged food analysis API",
+    healthCheck: "/api/health",
+  });
+});
+
 // Mount REST API routes
 app.use("/api", apiRoutes);
 
