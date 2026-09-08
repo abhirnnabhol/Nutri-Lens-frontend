@@ -5,14 +5,25 @@
  */
 
 function getApiBaseUrl() {
-  let base = (import.meta.env.VITE_API_URL || "/api").trim();
-  // Strip trailing slashes
-  base = base.replace(/\/+$/, "");
-  // If user provided full URL like https://xyz.vercel.app without /api, append /api
-  if (base.startsWith("http") && !base.endsWith("/api")) {
-    base = `${base}/api`;
+  if (import.meta.env.VITE_API_URL) {
+    let base = import.meta.env.VITE_API_URL.trim().replace(/\/+$/, "");
+    if (base.startsWith("http") && !base.endsWith("/api")) {
+      base = `${base}/api`;
+    }
+    return base;
   }
-  return base;
+
+  // Automatic Render backend host detection:
+  // When running on https://nutrilens-frontend-jqz0.onrender.com, automatically route to https://nutrilens-backend-jqz0.onrender.com/api
+  if (typeof window !== "undefined" && window.location.hostname.includes("onrender.com")) {
+    const host = window.location.hostname;
+    if (host.includes("frontend")) {
+      const backendHost = host.replace("frontend", "backend");
+      return `https://${backendHost}/api`;
+    }
+  }
+
+  return "/api";
 }
 
 const API_BASE_URL = getApiBaseUrl();
